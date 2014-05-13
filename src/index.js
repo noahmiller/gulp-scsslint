@@ -5,7 +5,10 @@
 var child_process = require('child_process');
 var map = require('map-stream');
 var gutil = require('gulp-util');
-var xmlparser = require('xml2json');
+var xml2js = require('xml2js');
+var xmlparser = new xml2js.Parser({
+   explicitArray: true
+});
 
 var reporters = require('./reporters');
 
@@ -35,26 +38,27 @@ var COMMAND_NOT_FOUND = 127;
  * The issue objects contain properties matching those in the XML output
  * of SCSS-Lint (https://github.com/causes/scss-lint#xml), e.g. line and reason.
  *
- * If the XML contains no errors, and empty object will be returned.
+ * If the XML contains no errors, and empty object will be provided.
  */
-var xmlToErrorReport = function(xml) {
-   var errorsInFiles = {};
-   if (xml && xml.length) {
-      var data = xmlparser.toJson(xml, {
-         object: true,
-         arrayNotation: true
-      });
+var xmlToErrorReport = function(xml, cb) {
+   xml = xml || '';
+
+   xmlparser.parseString(xml, function (err, data) {
+      var errorsInFiles = {};
 
       // data.lint[0].file is an array of objects with file name and issues.
       // For each of those, add the issues array to errorsInFiles with the
       // file name as the key.
-      if (data && data.lint && data.lint.length && data.lint[0].file) {
-         data.lint[0].file.forEach(function(fileData) {
-            errorsInFiles[fileData.name] = fileData.issue;
+      if (data && data.lint && data.lint.file) {
+         data.lint.file.forEach(function(fileData) {
+            errorsInFiles[fileData.$.name] = fileData.issue.map(function(issue){
+               return issue.$;
+            });
          });
       }
-   }
-   return errorsInFiles;
+
+      cb(err, errorsInFiles);
+   });
 };
 
 /**
@@ -171,9 +175,10 @@ var scssLintPlugin = function(options) {
          } else {
             // Parse the returned XML and add a success or error object
             // to the file in the stream.
-            var errorsInFiles = xmlToErrorReport(stdout);
-            file.scsslint = formatOutput(file, errorsInFiles);
-            cb(null, file);
+            xmlToErrorReport(stdout, function(err, errorsInFiles) {
+               file.scsslint = formatOutput(file, errorsInFiles);
+               cb(null, file);
+            });
          }
       });
    });
