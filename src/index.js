@@ -115,6 +115,7 @@ var scssLintPlugin = function(options) {
    var args = [];
    var config = options['config'];
    var bin = options['bin'] || 'scss-lint';
+   var exclude = options['exclude'];
 
    var stream;
    var files = [];
@@ -124,6 +125,11 @@ var scssLintPlugin = function(options) {
    if (config) {
       args.push('-c');
       args.push(config);
+   }
+
+   if (exclude) {
+      args.push('-e');
+      args.push(exclude);
    }
 
    // Get XML output so it's easy to parse errors
