@@ -6,6 +6,9 @@ var c = require('chalk');
 var gutil = require('gulp-util');
 var map = require('map-stream');
 
+// Consts
+var PLUGIN_NAME = 'gulp-scsslint';
+
 /**
  * Default reporter logs SCSS-Lint errors using similar a similar format
  * to SCSS-Lint's default reporter, e.g.:
@@ -32,7 +35,7 @@ exports.defaultReporter = function(file) {
 exports.failReporter = function(file) {
    var error;
    if (file.scsslint && !file.scsslint.success) {
-      error = new gutil.PluginError('gulp-jshint', {
+      error = new gutil.PluginError(PLUGIN_NAME, {
          message: 'SCSS-Lint failed for: ' + file.relative,
          showStack: false
       });
@@ -57,7 +60,7 @@ exports.reporter = function(reporter) {
    }
 
    if ('undefined' === typeof reporter) {
-      throw new gutil.PluginError('gulp-jshint', 'Invalid reporter ' + reporter);
+      throw new gutil.PluginError(PLUGIN_NAME, 'Invalid reporter ' + reporter);
    }
 
    return map(function(file, cb) {
