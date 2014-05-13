@@ -43,7 +43,12 @@ var COMMAND_NOT_FOUND = 127;
 var xmlToErrorReport = function(xml, cb) {
    xml = xml || '';
 
-   xmlparser.parseString(xml, function (err, data) {
+   xmlparser.parseString(xml, function (error, data) {
+      if (error) {
+         error.message = 'Parsing SCSS-Lint XML output failed: ' + error.message;
+         error = new gutil.PluginError(PLUGIN_NAME, error);
+      }
+
       var errorsInFiles = {};
 
       // data.lint[0].file is an array of objects with file name and issues.
@@ -57,7 +62,7 @@ var xmlToErrorReport = function(xml, cb) {
          });
       }
 
-      cb(err, errorsInFiles);
+      cb(error, errorsInFiles);
    });
 };
 
@@ -111,7 +116,7 @@ var scssLintPlugin = function(options) {
    var config = options['config'];
    var bin = options['bin'] || 'scss-lint';
 
-   args.push(bin);
+   args = args.concat(bin.split(/\s/));
 
    if (config) {
       args.push('-c');
@@ -119,19 +124,18 @@ var scssLintPlugin = function(options) {
    }
 
    // Get XML output so it's easy to parse errors
-   args.push('-f XML');
+   args.push('-fXML');
 
    /**
-    * If error.code is non-zero and does not represent a lint error,
+    * If code is non-zero and does not represent a lint error,
     * then returns a PluginError.
     */
-   function createExecError(error, bin) {
+   function createExecError(code, bin) {
       var pluginError;
-      var code = error && error.code;
-      if (code && LINT_ERROR_CODE !== error.code)
+      if (code && LINT_ERROR_CODE !== code)
       {
          var msg;
-         if (COMMAND_NOT_FOUND === code) {
+         if ('ENOENT' === code || COMMAND_NOT_FOUND === code) {
             msg = bin + ' could not be found\n';
             msg += '1. Please make sure you have ruby installed: `ruby -v`\n';
             msg += '2. Install the `scss-lint` gem by running:\n';
@@ -147,37 +151,48 @@ var scssLintPlugin = function(options) {
    }
 
    /**
-    * Runs the scss-lint binary using args with the given filePaths.
+    * Spawns the scss-lint binary using args with the given filePaths
+    * and returns the spawned process.
     */
-   function runScssLint(filePaths, cb) {
-      // Escape spaces in file paths
-      filePaths = filePaths.map(function(path) {
-         return path.replace(/(\s)/g, "\\ ");
-      });
+   function spawnScssLint(filePaths) {
+      var execOptions = args.concat(filePaths);
+      var bin = execOptions.shift();
 
-      var execOptions = args.concat(filePaths).join(' ');
-
-      // Start the server
-      var child = child_process.exec(execOptions, {
+      // Run scss-lint
+      return child_process.spawn(bin, execOptions, {
          cwd: process.cwd(),
-         stdio: 'inherit'
-      }, cb);
+         stdio: ['ignore', 'pipe', process.stderr]
+      });
    }
 
    return map(function(file, cb) {
       if (!file) cb(null, file);
 
-      runScssLint([file.path], function(error, stdout, stderr) {
+      var lint = spawnScssLint([file.path]);
+
+      // Buffer XML output until the entire response has been provided.
+      // LATER: consider streaming the XML
+      var xml = '';
+      lint.stdout.on('data', function(data) { xml += data; });
+
+      // Handle spawn errors
+      lint.on('error', function(error) {
+         var execError = createExecError(error.code, bin);
+         cb(execError, file);
+      });
+
+      // On exit, handle lint output
+      lint.on('exit', function(code) {
          // Check for a non-lint error from the scss-lint binary
-         var execError = createExecError(error, bin);
+         var execError = createExecError(code, bin);
          if (execError) {
             cb(execError, file);
          } else {
             // Parse the returned XML and add a success or error object
             // to the file in the stream.
-            xmlToErrorReport(stdout, function(err, errorsInFiles) {
+            xmlToErrorReport(xml, function(error, errorsInFiles) {
                file.scsslint = formatOutput(file, errorsInFiles);
-               cb(null, file);
+               cb(error, file);
             });
          }
       });

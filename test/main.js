@@ -142,9 +142,27 @@ describe('gulp-scsslint', function() {
 
          var stream = scsslint();
          stream.on('data', function(newFile) {
+            newFile.scsslint.errorCount.should.be.greaterThan(0);
             should.exist(newFile.scsslint.results[0].reason);
             should.exist(newFile.scsslint.results[0].line);
             should.exist(newFile.scsslint.results[0].severity);
+         });
+         stream.once('end', function() {
+            done();
+         });
+
+         stream.write(file);
+         stream.end();
+      });
+
+      it('should handle a long file with many issues', function(done) {
+         this.timeout(15000);
+         var file = getFile('fixtures/long.scss');
+
+         var stream = scsslint();
+         stream.on('data', function(newFile) {
+            should.exist(newFile.scsslint.errorCount);
+            newFile.scsslint.errorCount.should.be.greaterThan(2500);
          });
          stream.once('end', function() {
             done();
@@ -162,7 +180,7 @@ describe('gulp-scsslint', function() {
          var stream = scsslint({ bin: 'scss-lint-not-installed' });
 
          stream.once('end', function() {
-            // fileCount.should.equal(1);
+            fileCount.should.equal(1);
          });
 
          stream.on('error', function(error) {
