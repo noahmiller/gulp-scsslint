@@ -181,7 +181,7 @@ describe('gulp-scsslint', function() {
       });
 
       it('should handle a long file with many issues', function(done) {
-         this.timeout(15000);
+         this.timeout(30000);
          var file = getFile('fixtures/long.scss');
 
          var stream = scsslint();
