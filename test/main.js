@@ -18,6 +18,7 @@ var getFile = function(filePath) {
 
 describe('gulp-scsslint', function() {
    describe('scsslint()', function() {
+      this.timeout(5000); // travis appears to be slow at running tests
 
       it('should pass file through', function(done) {
          var fileCount = 0;
