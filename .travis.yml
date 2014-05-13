@@ -1,3 +1,5 @@
+before_install: gem install bundler; bundle install;
+install: npm install -d
 language: node_js
 node_js:
   - '0.10'

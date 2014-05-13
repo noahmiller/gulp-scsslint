@@ -179,8 +179,6 @@ describe('gulp-scsslint', function() {
 
          var file = getFile('fixtures/pass.scss');
 
-         process.env.BUNDLE_GEMFILE = 'test/fixtures/Gemfile';
-
          var stream = scsslint({ bin: 'bundle exec scss-lint' });
          stream.on('data', function(newFile) {
             newFile.scsslint.success.should.equal(true);
