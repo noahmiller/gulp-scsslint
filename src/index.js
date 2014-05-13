@@ -3,7 +3,7 @@
 'use strict';
 
 var child_process = require('child_process');
-var map = require('map-stream');
+var es = require('event-stream');
 var gutil = require('gulp-util');
 var xml2js = require('xml2js');
 var xmlparser = new xml2js.Parser({
@@ -116,6 +116,9 @@ var scssLintPlugin = function(options) {
    var config = options['config'];
    var bin = options['bin'] || 'scss-lint';
 
+   var stream;
+   var files = [];
+
    args = args.concat(bin.split(/\s/));
 
    if (config) {
@@ -165,10 +168,13 @@ var scssLintPlugin = function(options) {
       });
    }
 
-   return map(function(file, cb) {
-      if (!file) cb(null, file);
+   function queueFile(file) {
+      if (file) files.push(file);
+   }
 
-      var lint = spawnScssLint([file.path]);
+   function endStream() {
+      var filePaths = files.map(function(file) { return file.path; });
+      var lint = spawnScssLint(filePaths);
 
       // Buffer XML output until the entire response has been provided.
       // LATER: consider streaming the XML
@@ -178,7 +184,7 @@ var scssLintPlugin = function(options) {
       // Handle spawn errors
       lint.on('error', function(error) {
          var execError = createExecError(error.code, bin);
-         cb(execError, file);
+         stream.emit('error', execError);
       });
 
       // On exit, handle lint output
@@ -186,17 +192,24 @@ var scssLintPlugin = function(options) {
          // Check for a non-lint error from the scss-lint binary
          var execError = createExecError(code, bin);
          if (execError) {
-            cb(execError, file);
+            stream.emit('error', execError);
          } else {
-            // Parse the returned XML and add a success or error object
-            // to the file in the stream.
+            // Parse the returned XML and add scsslint objects
+            // to the files in the stream.
             xmlToErrorReport(xml, function(error, errorsInFiles) {
-               file.scsslint = formatOutput(file, errorsInFiles);
-               cb(error, file);
+               for (var i = 0; i < files.length; i++) {
+                  var file = files[i];
+                  file.scsslint = formatOutput(file, errorsInFiles);
+                  stream.emit('data', file);
+               }
+               stream.emit('end');
             });
          }
       });
-   });
+   }
+
+   stream = es.through(queueFile, endStream);
+   return stream;
 };
 
 // Expose the reporters

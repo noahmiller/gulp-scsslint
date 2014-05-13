@@ -99,6 +99,31 @@ describe('gulp-scsslint', function() {
          stream.end();
       });
 
+      it('should lint lots of files quickly', function(done) {
+         var fileCount = 0;
+         var expectedFileCount = 100;
+
+         var files = [];
+         for (var i = 1; i <= expectedFileCount; i++) {
+            files.push(getFile('fixtures/lots/error' + i + '.scss'));
+         }
+
+         var stream = scsslint();
+         stream.on('data', function(newFile) {
+           ++fileCount;
+         });
+
+         stream.once('end', function() {
+            fileCount.should.equal(expectedFileCount);
+            done();
+         });
+
+         for (i = 0; i < files.length; i++) {
+            stream.write(files[i]);
+         }
+         stream.end();
+      });
+
       it('should support config file as options param', function(done) {
          var file = getFile('fixtures/pass-with-config.scss');
 
