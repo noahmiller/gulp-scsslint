@@ -1,7 +1,7 @@
 {
   "name": "gulp-scsslint",
   "description": "SCSS-Lint plugin for gulp",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "./index.js",
   "homepage": "http://github.com/noahmiller/gulp-scsslint",
   "repository": {
