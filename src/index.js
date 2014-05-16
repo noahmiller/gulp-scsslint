@@ -22,7 +22,7 @@ var LINT_ERROR_CODE = 65;
 // Other SCSS-Lint return codes, unrelated to SCSS errors / warnings.
 var SCSS_ERROR_CODES = {
   '64': 'Command line usage error',
-  '66': 'Input file did not exist or was not readable',
+  '66': 'No files specified, files did not exist, or files were not readable',
   '70': 'Internal software error',
   '78': 'Configuration error'
 };
