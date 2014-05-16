@@ -258,5 +258,22 @@ describe('gulp-scsslint', function() {
          stream.end();
       });
 
+      it('should not error if no files are provided', function(done) {
+         var fileCount = 0;
+         var stream = scsslint();
+
+         stream.on('error', function(error){
+            // this should not be reached
+            error.should.equal(null);
+         });
+
+         stream.once('end', function() {
+            fileCount.should.equal(0);
+            done();
+         });
+
+         stream.end();
+      });
+
    });
 });

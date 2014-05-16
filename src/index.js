@@ -161,6 +161,8 @@ var scssLintPlugin = function(options) {
       var execOptions = args.concat(filePaths);
       var bin = execOptions.shift();
 
+      // gutil.log(bin + ' ' + execOptions.join(' '));
+
       // Run scss-lint
       return child_process.spawn(bin, execOptions, {
          cwd: process.cwd(),
@@ -179,6 +181,12 @@ var scssLintPlugin = function(options) {
    }
 
    function endStream() {
+      // Don't run scss-lint if there are no files
+      if (!files.length) {
+         stream.emit('end');
+         return;
+      }
+
       var filePaths = files.map(function(file) { return file.path; });
       var lint = spawnScssLint(filePaths);
 

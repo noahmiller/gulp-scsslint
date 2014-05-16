@@ -40,6 +40,25 @@ describe('gulp-scsslint', function() {
          stream.write(file);
          stream.end();
       });
+
+      it('should not error if no files are provided', function(done) {
+         var fileCount = 0;
+
+         var stream = scsslint.reporter();
+
+         stream.on('error', function(error){
+            // this should not be reached
+            error.should.equal(null);
+            done();
+         });
+
+         stream.once('end', function() {
+            fileCount.should.equal(0);
+            done();
+         });
+
+         stream.end();
+      });
    });
 
    describe('scsslint.reporter(default)', function() {
