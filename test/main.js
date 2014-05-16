@@ -1,6 +1,7 @@
 var scsslint = require('../src');
 
 var gutil = require('gulp-util');
+var child_process = require('child_process');
 var es = require('event-stream');
 var path = require('path');
 var should = require('should');
@@ -296,6 +297,32 @@ describe('gulp-scsslint', function() {
          });
 
          stream.write(fakeFile);
+         stream.end();
+      });
+
+      it('should pass options.args to scss-lint', function(done) {
+         var expectedArg = '--exclude=foo bar';
+         var actualArgs;
+
+         var file = getFile('fixtures/error.scss');
+
+         var stream = scsslint({ args: [expectedArg] });
+
+         // Stub child_process.spawn
+         var child_process_spawn = child_process.spawn;
+         child_process.spawn = function(command, args, options) {
+            actualArgs = args;
+            return child_process_spawn(command, args, options);
+         };
+
+         stream.once('end', function() {
+            actualArgs.should.containEql(expectedArg);
+
+            child_process.spawn = child_process_spawn;
+            done();
+         });
+
+         stream.write(file);
          stream.end();
       });
 

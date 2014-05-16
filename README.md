@@ -99,7 +99,8 @@ For example:
 ```javascript
 scsslint({
   config: 'my-scss-lint.yml',
-  bin: 'bundle exec scss-lint'
+  bin: 'bundle exec scss-lint',
+  args: ['--exclude=vendor.scss'] // see caveat below
 })
 ```
 
@@ -113,6 +114,26 @@ Type: `String`
 
 The scss-lint call signature.  Default is `scss-lint`.  In the context of
 bundler, `bundle exec scss-lint` might be preferable.
+
+##### options property: `args`
+Type: `Array`
+
+An array of additional arguments supported by `scss-lint`.  See
+`scss-lint --help` for options.
+
+For example:
+```javascript
+args: ['--exclude=vendor.scss']
+```
+
+**N.B.**: Most options will conflict with this plugin or cause inconsistent
+results.  For example, `--exclude` will cause an error to be emitted if
+all files passed to scss-lint are excluded; and excluded files will be
+marked us as successfully linted: `excluded_file.scsslint = {success: true}`.
+Use these options with caution.
+
+**N.B.**: Options should not include a space between the option property
+and the value.
 
 ## Results
 

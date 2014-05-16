@@ -105,6 +105,7 @@ var formatOutput = function(file, errorsInFiles) {
  * Options:
  * - config: path to scss-lint.yml config file
  * - bin: the scss-lint call signature, e.g. 'bundle exec scss-lint'
+ * - args: any options that scss-lint supports
  */
 var scssLintPlugin = function(options) {
    // Handle when options is a config file path
@@ -120,6 +121,8 @@ var scssLintPlugin = function(options) {
    var files = [];
 
    args = args.concat(bin.split(/\s/));
+
+   args = args.concat(options.args || []);
 
    if (config) {
       args.push('-c');
