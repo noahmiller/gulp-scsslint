@@ -33,10 +33,43 @@ var scsslint = require('gulp-scsslint');
 var gulp = require('gulp');
 
 gulp.task('lint', function() {
-  gulp.src('./styles/*.scss')
+  gulp.src('styles/*.scss')
     .pipe(scsslint())
     .pipe(scsslint.reporter());
 });
+```
+
+### Excluding files
+
+Use file globbing and pattern negation to exclude files that
+should not be linted (e.g. vendor files):
+
+`gulp.src(['styles/*.scss', '!styles/vendor.scss'])`
+
+If you use the same task for linting and sass transpilation,
+then [gulp-filter](https://github.com/sindresorhus/gulp-filter)
+can temporarily remove the vendor files from the pipe:
+
+```javascript
+
+gulp.task('sass', function() {
+  var gulpFilter = require('gulp-filter');
+  var vendorFilter = gulpFilter('!styles/vendor.scss');
+
+  gulp.src('styles/*.scss')
+    .pipe(vendorFilter)           // temporarily filter out vendor.scss
+    .pipe(scsslint())
+    .pipe(vendorFilter.restore()) // restore vendor.scss to the piped files
+    .pipe(sass())
+    .pipe(gulp.dest('assets/css'));
+});
+```
+
+But it's probably better to use two separate tasks:
+
+```javascript
+gulp.task('lint', function() { ... });
+gulp.task('sass', ['lint'], function() { ... });
 ```
 
 ## API
@@ -51,7 +84,7 @@ though if your config file uses the standard file name and location
 then SCSS-Lint will find it by default.
 
 ```javascript
-gulp.src('./styles/*.scss')
+gulp.src('styles/*.scss')
   .pipe(scsslint('my-scss-lint.yml'))
 });
 ```
@@ -61,11 +94,22 @@ gulp.src('./styles/*.scss')
 #### options
 Type: `Object`
 
-##### `config`
+For example:
+
+```javascript
+scsslint({
+  config: 'my-scss-lint.yml',
+  bin: 'bundle exec scss-lint'
+})
+```
+
+##### options property: `config`
+Type: `String`
 
 Path to your .scss-lint.yml file.  Default is `undefined`.
 
-##### `bin`
+##### options property: `bin`
+Type: `String`
 
 The scss-lint call signature.  Default is `scss-lint`.  In the context of
 bundler, `bundle exec scss-lint` might be preferable.
@@ -148,7 +192,7 @@ var myReporter = function(file) {
 };
 
 gulp.task('lint', function() {
-  return gulp.src('./styles/*.scss')
+  return gulp.src('styles/*.scss')
     .pipe(scsslint())
     .pipe(scsslint.reporter(myReporter));
 });

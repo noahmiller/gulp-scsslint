@@ -1,7 +1,7 @@
 var scsslint = require('./src');
 var gulp = require('gulp');
 
-var scss = './test/fixtures/pass.scss';
+var scss = 'test/fixtures/pass.scss';
 
 gulp.task('lint', function() {
    gulp.src(scss).
