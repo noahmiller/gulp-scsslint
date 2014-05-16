@@ -1,7 +1,7 @@
 var scsslint = require('../src');
 
 var gutil = require('gulp-util');
-var fs = require('fs');
+var es = require('event-stream');
 var path = require('path');
 var should = require('should');
 require('mocha');
@@ -12,7 +12,7 @@ var getFile = function(filePath) {
       path: filePath,
       cwd: 'test/',
       base: path.dirname(filePath),
-      contents: fs.readFileSync(filePath)
+      contents: null
    });
 };
 
@@ -30,7 +30,6 @@ describe('gulp-scsslint', function() {
             should.exist(newFile);
             should.exist(newFile.path);
             should.exist(newFile.relative);
-            should.exist(newFile.contents);
             newFile.path.should.equal('test/fixtures/pass.scss');
             newFile.relative.should.equal('pass.scss');
             ++fileCount;
