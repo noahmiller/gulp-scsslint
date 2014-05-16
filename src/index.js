@@ -173,11 +173,17 @@ var scssLintPlugin = function(options) {
    function queueFile(file) {
       // Process a file even if file.contents === null (i.e. file.isNull() === true)
       // since we don't actually care about the file contents.
-      //
-      // Hang onto files until the end of the stream so that they can be
-      // sent in a batch to scss-lint, which significantly increases
-      // performance for large numbers of files.
-      if (file) files.push(file);
+      if (file) {
+         // Hang onto files until the end of the stream so that they can be
+         // sent in a batch to scss-lint, which significantly increases
+         // performance for large numbers of files.
+         if (file.path) {
+            files.push(file);
+         } else {
+            var msg = 'File provided with no path';
+            stream.emit('error', new gutil.PluginError(PLUGIN_NAME, msg));
+         }
+      }
    }
 
    function endStream() {

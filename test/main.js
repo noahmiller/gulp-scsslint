@@ -275,5 +275,29 @@ describe('gulp-scsslint', function() {
          stream.end();
       });
 
+
+      it('should error on a file with no path', function(done) {
+         var errorCount = 0;
+
+         var fakeFile = new gutil.File({
+            contents: es.readArray(['stream', 'with', 'contents'])
+         });
+
+         var stream = scsslint();
+
+         stream.on('error', function(error){
+            error.message.should.equal('File provided with no path');
+            ++errorCount;
+         });
+
+         stream.once('end', function() {
+            errorCount.should.equal(1);
+            done();
+         });
+
+         stream.write(fakeFile);
+         stream.end();
+      });
+
    });
 });
