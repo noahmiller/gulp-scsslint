@@ -70,6 +70,25 @@ Path to your .scss-lint.yml file.  Default is `undefined`.
 The scss-lint call signature.  Default is `scss-lint`.  In the context of
 bundler, `bundle exec scss-lint` might be preferable.
 
+##### `exclude`
+
+Any files to exclude from the linting process. 
+
+Single file:
+
+```javascript
+gulp.src('./styles/*.scss')
+  .pipe(scsslint({exclude:'folder/_file.scss'}))
+});
+```
+Multiple files:
+
+```javascript
+gulp.src('./styles/*.scss')
+  .pipe(scsslint({exclude:['folder/_file.scss', 'folder2/_file2.scss']}))
+});
+```
+
 ## Results
 
 Adds the following properties to the file object:
