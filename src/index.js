@@ -15,9 +15,10 @@ var reporters = require('./reporters');
 // Consts
 var PLUGIN_NAME = 'gulp-scsslint';
 
-// SCSS-Lint return code when a lint error or warning was found.
+// SCSS-Lint return codes when a lint error or warning was found.
 // https://github.com/causes/scss-lint/blob/master/lib/scss_lint/cli.rb
-var LINT_ERROR_CODE = 65;
+// This was changed from 65 to 1 or 2 in version 0.26.0.
+var LINT_ERROR_CODES = [1, 2, 65];
 
 // Other SCSS-Lint return codes, unrelated to SCSS errors / warnings.
 var SCSS_ERROR_CODES = {
@@ -138,7 +139,7 @@ var scssLintPlugin = function(options) {
     */
    function createExecError(code, bin) {
       var pluginError;
-      if (code && LINT_ERROR_CODE !== code)
+      if (code && -1 === LINT_ERROR_CODES.indexOf(code))
       {
          var msg;
          if ('ENOENT' === code || COMMAND_NOT_FOUND === code) {
