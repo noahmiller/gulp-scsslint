@@ -20,9 +20,10 @@ exports.defaultReporter = function(file) {
 
    file.scsslint.results.forEach(function(result) {
       var msg =
-         c.cyan(file.path) + ':' +
-         c.red(result.line) + ' ' +
-         ('error' === result.severity ? c.red('[E]') : c.cyan('[W]')) + ' ' +
+         c.cyan(file.relative) + ':' +
+         c.magenta(result.line) + ' ' +
+         ('error' === result.severity ? c.red('[E]') : c.yellow('[W]')) + ' ' +
+         c.green(result.linter ? (result.linter + ': ') : '') +
          result.reason;
       gutil.log(msg);
   });
