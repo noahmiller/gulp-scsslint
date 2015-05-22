@@ -145,8 +145,8 @@ var scssLintPlugin = function(options) {
          if ('ENOENT' === code || COMMAND_NOT_FOUND === code) {
             msg = bin + ' could not be found\n';
             msg += '1. Please make sure you have ruby installed: `ruby -v`\n';
-            msg += '2. Install the `scss-lint` gem by running:\n';
-            msg += 'gem update --system && gem install scss-lint';
+            msg += '2. Install the `scss_lint` gem by running:\n';
+            msg += 'gem update --system && gem install scss_lint';
          } else if (SCSS_ERROR_CODES[code]) {
             msg = SCSS_ERROR_CODES[code];
          } else {
