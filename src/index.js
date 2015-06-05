@@ -5,10 +5,6 @@
 var child_process = require('child_process');
 var es = require('event-stream');
 var gutil = require('gulp-util');
-var xml2js = require('xml2js');
-var xmlparser = new xml2js.Parser({
-   explicitArray: true
-});
 
 var reporters = require('./reporters');
 
@@ -32,42 +28,6 @@ var SCSS_ERROR_CODES = {
 var COMMAND_NOT_FOUND = 127;
 
 /**
- * Convert the given XML string to an error report object in the form:
- *    {
- *       filePath: [issue, issue]
- *    }
- * The issue objects contain properties matching those in the XML output
- * of SCSS-Lint (https://github.com/causes/scss-lint#xml), e.g. line and reason.
- *
- * If the XML contains no errors, and empty object will be provided.
- */
-var xmlToErrorReport = function(xml, cb) {
-   xml = xml || '';
-
-   xmlparser.parseString(xml, function (error, data) {
-      if (error) {
-         error.message = 'Parsing SCSS-Lint XML output failed: ' + error.message;
-         error = new gutil.PluginError(PLUGIN_NAME, error);
-      }
-
-      var errorsInFiles = {};
-
-      // data.lint[0].file is an array of objects with file name and issues.
-      // For each of those, add the issues array to errorsInFiles with the
-      // file name as the key.
-      if (data && data.lint && data.lint.file) {
-         data.lint.file.forEach(function(fileData) {
-            errorsInFiles[fileData.$.name] = fileData.issue.map(function(issue){
-               return issue.$;
-            });
-         });
-      }
-
-      cb(error, errorsInFiles);
-   });
-};
-
-/**
  * Return a status object for the given file.  If there are no errors, returns:
  *    { success: true }
  *
@@ -76,7 +36,7 @@ var xmlToErrorReport = function(xml, cb) {
  *    - success: false
  *    - errorCount: integer, count of results
  *    - results: array of objects with properties matching the issue element
- *       properties of SCSS-Lint XML output (https://github.com/causes/scss-lint#xml).
+ *       properties of SCSS-Lint JSON output (https://github.com/causes/scss-lint#json).
  */
 var formatOutput = function(file, errorsInFiles) {
    var filePath = (file.path || 'stdin');
@@ -130,8 +90,8 @@ var scssLintPlugin = function(options) {
       args.push(config);
    }
 
-   // Get XML output so it's easy to parse errors
-   args.push('-fXML');
+   // Get JSON output so it's easy to parse errors
+   args.push('--format=JSON');
 
    /**
     * If code is non-zero and does not represent a lint error,
@@ -200,10 +160,10 @@ var scssLintPlugin = function(options) {
       var filePaths = files.map(function(file) { return file.path; });
       var lint = spawnScssLint(filePaths);
 
-      // Buffer XML output until the entire response has been provided.
-      // LATER: consider streaming the XML
-      var xml = '';
-      lint.stdout.on('data', function(data) { xml += data; });
+      // Buffer JSON output until the entire response has been provided.
+      // LATER: consider streaming the JSON
+      var json = '';
+      lint.stdout.on('data', function(data) { json += data; });
 
       // Handle spawn errors
       lint.on('error', function(error) {
@@ -218,16 +178,14 @@ var scssLintPlugin = function(options) {
          if (execError) {
             stream.emit('error', execError);
          } else {
-            // Parse the returned XML and add scsslint objects
-            // to the files in the stream.
-            xmlToErrorReport(xml, function(error, errorsInFiles) {
-               for (var i = 0; i < files.length; i++) {
-                  var file = files[i];
-                  file.scsslint = formatOutput(file, errorsInFiles);
-                  stream.emit('data', file);
-               }
-               stream.emit('end');
-            });
+            // Add scsslint objects to the files in the stream.
+            json = JSON.parse(json);
+            for (var i = 0; i < files.length; i++) {
+               var file = files[i];
+               file.scsslint = formatOutput(file, json);
+               stream.emit('data', file);
+            }
+            stream.emit('end');
          }
       });
    }
